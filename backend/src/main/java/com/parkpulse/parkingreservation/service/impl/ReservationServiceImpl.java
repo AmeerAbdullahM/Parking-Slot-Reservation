@@ -24,6 +24,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * ReservationServiceImpl
+ *
+ * Core transaction coordinator for the Parking Slot Reservation lifecycle:
+ * 1. Time-based Reservation with temporal overlap collision prevention.
+ * 2. Check-In: Transition from CONFIRMED -> CHECKED_IN, updating bay status to OCCUPIED.
+ * 3. Check-Out: Transition to COMPLETED or OVERSTAYED, triggering the Overstay Penalty engine.
+ * 4. Paginated querying using Spring Data JPA Pageable.
+ */
 @Service
 public class ReservationServiceImpl implements ReservationService {
 
