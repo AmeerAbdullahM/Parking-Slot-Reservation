@@ -1,0 +1,292 @@
+{
+  "info": {
+    "name": "ParkPulse - Smart Parking Slot Reservation API",
+    "description": "Comprehensive Postman API collection for ParkPulse with RBAC, 2D Floor Map, and Overstay Penalty Calculation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@parkpulse.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login as Mall Manager",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager.mall@parkpulse.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login as Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@parkpulse.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Register New Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Samantha Reed\",\n  \"email\": \"samantha@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+1-555-0888\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Get Current Authenticated User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Parking Lots & 2D Floor Maps",
+      "item": [
+        {
+          "name": "Get All Active Facilities",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/lots", "host": ["{{baseUrl}}"], "path": ["lots"] }
+          }
+        },
+        {
+          "name": "Get 2D Floor Slot Map (Bus-Style Grid)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/lots/1/slots/map?floor=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["lots", "1", "slots", "map"],
+              "query": [{ "key": "floor", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Search Facilities with Pagination",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/lots/search?name=Mall&page=0&size=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["lots", "search"],
+              "query": [
+                { "key": "name", "value": "Mall" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Floor to Facility (Manager/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{managerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/lots/1/floors", "host": ["{{baseUrl}}"], "path": ["lots", "1", "floors"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Parking Slots (CRUD + Search & Pagination)",
+      "item": [
+        {
+          "name": "Search & Paginate Slots",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/slots?lotId=1&floor=1&status=AVAILABLE&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["slots"],
+              "query": [
+                { "key": "lotId", "value": "1" },
+                { "key": "floor", "value": "1" },
+                { "key": "status", "value": "AVAILABLE" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Slot / Bay (Manager/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotNumber\": \"B1-20\",\n  \"floorNumber\": 1,\n  \"rowNumber\": 3,\n  \"colNumber\": 1,\n  \"slotType\": \"EV_CHARGING\",\n  \"baseHourlyRate\": 6.50,\n  \"parkingLotId\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/slots", "host": ["{{baseUrl}}"], "path": ["slots"] }
+          }
+        },
+        {
+          "name": "Update Slot Status (Toggle Maintenance)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{managerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/slots/1/status?status=MAINTENANCE",
+              "host": ["{{baseUrl}}"],
+              "path": ["slots", "1", "status"],
+              "query": [{ "key": "status", "value": "MAINTENANCE" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Customer Vehicles",
+      "item": [
+        {
+          "name": "Register Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licensePlate\": \"CA-5566\",\n  \"vehicleType\": \"EV\",\n  \"model\": \"Rivian R1T\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] }
+          }
+        },
+        {
+          "name": "Get Customer Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/vehicles/my", "host": ["{{baseUrl}}"], "path": ["vehicles", "my"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reservations & Overstay Penalties",
+      "item": [
+        {
+          "name": "Create Time-Based Reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotId\": 4,\n  \"vehicleId\": 1,\n  \"startTime\": \"2026-10-24T10:00:00\",\n  \"endTime\": \"2026-10-24T12:00:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "Vehicle Check-In",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/1/check-in", "host": ["{{baseUrl}}"], "path": ["reservations", "1", "check-in"] }
+          }
+        },
+        {
+          "name": "Vehicle Check-Out (Triggers Overstay Penalty Calculation)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/1/check-out", "host": ["{{baseUrl}}"], "path": ["reservations", "1", "check-out"] }
+          }
+        },
+        {
+          "name": "Get My Bookings (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/my?page=0&size=10", "host": ["{{baseUrl}}"], "path": ["reservations", "my"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Admin Controls",
+      "item": [
+        {
+          "name": "Provision Mall Manager ID & Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"David Miller\",\n  \"email\": \"david.mgr@mall.com\",\n  \"password\": \"managerPass2026\",\n  \"phone\": \"+1-555-7788\",\n  \"assignedLotId\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/managers", "host": ["{{baseUrl}}"], "path": ["admin", "managers"] }
+          }
+        },
+        {
+          "name": "Get Global System Metrics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/stats", "host": ["{{baseUrl}}"], "path": ["admin", "stats"] }
+          }
+        }
+      ]
+    }
+  ]
+}
