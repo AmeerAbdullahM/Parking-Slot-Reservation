@@ -10,6 +10,17 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+/**
+ * OverstayPenaltyServiceImpl
+ *
+ * Implements the signature bonus feature for the Smart Parking Slot Reservation System.
+ * Calculates automated financial penalties when vehicles depart past their reserved window.
+ *
+ * Evaluation & Viva Concepts:
+ * 1. Grace Period Protection: Waives penalty if exit occurs within the configured grace period (15 min).
+ * 2. Tiered Hourly Multiplier: Multiplies base slot hourly rate by 1.5x for overdue duration.
+ * 3. Ceiling Rounding: Any fractional hour overstay is rounded up to the nearest whole billable hour.
+ */
 @Service
 public class OverstayPenaltyServiceImpl implements OverstayPenaltyService {
 
