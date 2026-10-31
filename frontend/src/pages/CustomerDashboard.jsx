@@ -20,7 +20,9 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
   // Booking Modal State
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
-  const [selectedVehicleId, setSelectedVehicleId] = useState('');
+  const [vehiclePlate, setVehiclePlate] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [vehicleType, setVehicleType] = useState('SEDAN');
   const [startTime, setStartTime] = useState('');
   const [durationHours, setDurationHours] = useState(2);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -39,16 +41,20 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
   const [newType, setNewType] = useState('SEDAN');
   const [newModel, setNewModel] = useState('');
 
+  // Helper for current local time formatted for datetime-local (+ 2 minutes default)
+  const getNowLocalString = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 2);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   // Load lots & vehicles on mount
   useEffect(() => {
     loadLots();
     loadVehicles();
     loadReservations();
-
-    // Default start time to now formatted for datetime-local
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    setStartTime(now.toISOString().slice(0, 16));
+    setStartTime(getNowLocalString());
   }, []);
 
   // When selected lot or floor changes, fetch 2D slot map
@@ -83,8 +89,10 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
     try {
       const data = await api.getMyVehicles();
       setVehicles(data || []);
-      if (data && data.length > 0 && !selectedVehicleId) {
-        setSelectedVehicleId(data[0].id);
+      if (data && data.length > 0 && !vehiclePlate) {
+        setVehiclePlate(data[0].licensePlate);
+        setVehicleModel(data[0].model || '');
+        setVehicleType(data[0].vehicleType || 'SEDAN');
       }
     } catch (err) {
       console.error('Failed to load user vehicles:', err);
@@ -107,13 +115,42 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
     if (slot.status !== 'AVAILABLE') return;
     setSelectedSlot(slot);
     setBookingError('');
+
+    // Pre-populate if user has a vehicle, or keep current/blank for typing
+    if (vehicles && vehicles.length > 0 && !vehiclePlate) {
+      setVehiclePlate(vehicles[0].licensePlate);
+      setVehicleModel(vehicles[0].model || '');
+      setVehicleType(vehicles[0].vehicleType || (slot.slotType === 'EV_CHARGING' ? 'EV' : 'SEDAN'));
+    } else if (slot.slotType === 'EV_CHARGING') {
+      setVehicleType('EV');
+    }
+
+    setStartTime(getNowLocalString());
     setIsBookingOpen(true);
   };
 
   const handleCreateReservation = async (e) => {
     e.preventDefault();
-    if (!selectedSlot || !selectedVehicleId || !startTime) {
-      setBookingError('Please select a valid slot, vehicle, and start time.');
+    if (!selectedSlot) {
+      setBookingError('Please select a parking bay.');
+      return;
+    }
+
+    const cleanPlate = vehiclePlate.trim().toUpperCase();
+    if (!cleanPlate) {
+      setBookingError('Please type your vehicle license plate / registration number.');
+      return;
+    }
+
+    // Plate format: 3 to 15 uppercase letters/digits/hyphens
+    const plateRegex = /^[A-Z0-9- ]{3,15}$/;
+    if (!plateRegex.test(cleanPlate)) {
+      setBookingError('Invalid license plate format. Expected 3-15 capital letters or numbers (e.g. ABC-1234, NY-9999, KA-01-AB-1234).');
+      return;
+    }
+
+    if (!startTime) {
+      setBookingError('Please select a reservation start date and time.');
       return;
     }
 
@@ -124,23 +161,28 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
       const start = new Date(startTime);
       const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
 
-      // Format ISO string without milliseconds
-      const formatIso = (d) => d.toISOString().split('.')[0];
+      const formatLocalIso = (d) => {
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      };
 
       await api.createReservation({
         slotId: selectedSlot.id,
-        vehicleId: selectedVehicleId,
-        startTime: formatIso(start),
-        endTime: formatIso(end)
+        licensePlate: cleanPlate,
+        vehicleModel: vehicleModel.trim() || 'Standard',
+        vehicleType: vehicleType,
+        startTime: formatLocalIso(start),
+        endTime: formatLocalIso(end)
       });
 
       setIsBookingOpen(false);
       setSelectedSlot(null);
       loadSlotMap(selectedLot.id, selectedFloor);
       loadReservations();
+      loadVehicles();
       setActiveTab('passes');
     } catch (err) {
-      setBookingError(err.message || 'Booking conflict! Please choose another time or bay.');
+      setBookingError(err.message || 'Booking conflict or invalid input! Please verify your details.');
     } finally {
       setBookingLoading(false);
     }
@@ -575,21 +617,126 @@ export default function CustomerDashboard({ activeTab, setActiveTab }) {
             )}
 
             <form onSubmit={handleCreateReservation}>
+              {/* Vehicle Number / License Plate Typing Field */}
               <div className="form-group">
-                <label className="form-label">Select Your Vehicle</label>
-                <select
-                  className="form-select"
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Vehicle License Plate / Number</label>
+                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>Typing input</span>
+                </div>
+                <input
+                  type="text"
+                  className="form-input mono"
+                  style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, fontSize: '1rem' }}
+                  placeholder="e.g. ABC-1234 or KA-01-AB-1234"
+                  value={vehiclePlate}
+                  onChange={(e) => setVehiclePlate(e.target.value.toUpperCase())}
                   required
-                >
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.licensePlate} ({v.model || v.vehicleType})
-                    </option>
-                  ))}
-                </select>
+                />
+                <div style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--text-muted)',
+                  marginTop: '0.35rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  padding: '0.4rem 0.65rem',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>Format:</span>
+                  <span>3-15 capital letters/numbers (e.g. <code>ABC-1234</code>, <code>NY-9999</code>, <code>KA-01-AB-1234</code>)</span>
+                </div>
               </div>
+
+              {/* Vehicle Make & Model Typing Field */}
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Vehicle Make & Model</label>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Optional typing</span>
+                </div>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Honda Civic, Toyota Camry, Tesla Model 3"
+                  value={vehicleModel}
+                  onChange={(e) => setVehicleModel(e.target.value)}
+                />
+                <div style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--text-muted)',
+                  marginTop: '0.35rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  <span>Format: <code>Brand + Model</code> (e.g. <em>Tesla Model 3</em>, <em>Honda Civic</em>, <em>Hyundai Creta</em>)</span>
+                </div>
+              </div>
+
+              {/* Vehicle Category Selection Chips */}
+              <div className="form-group">
+                <label className="form-label">Vehicle Type</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                  {['SEDAN', 'SUV', 'EV', 'MOTORCYCLE'].map((type) => {
+                    const isSelected = vehicleType === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        className={`btn ${isSelected ? 'btn-primary' : 'btn-ghost'}`}
+                        style={{
+                          padding: '0.45rem 0.25rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          textAlign: 'center'
+                        }}
+                        onClick={() => setVehicleType(type)}
+                      >
+                        {type === 'MOTORCYCLE' ? 'BIKE' : type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Quick-Autofill from saved vehicles if any exist */}
+              {vehicles && vehicles.length > 0 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '0.45rem' }}>
+                    Or quick-fill from your saved vehicles:
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {vehicles.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        style={{
+                          background: vehiclePlate === v.licensePlate ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.05)',
+                          border: vehiclePlate === v.licensePlate ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
+                          borderRadius: '6px',
+                          padding: '0.3rem 0.65rem',
+                          color: vehiclePlate === v.licensePlate ? '#38bdf8' : 'var(--text-muted)',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                        onClick={() => {
+                          setVehiclePlate(v.licensePlate);
+                          if (v.model) setVehicleModel(v.model);
+                          if (v.vehicleType) setVehicleType(v.vehicleType);
+                        }}
+                      >
+                        <Car size={13} />
+                        <span className="mono" style={{ fontWeight: 700 }}>{v.licensePlate}</span>
+                        {v.model && <span style={{ opacity: 0.7 }}>({v.model})</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Reservation Start Date & Time</label>

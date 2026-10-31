@@ -16,7 +16,13 @@ const handleResponse = async (response) => {
   }
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    const errorMsg = data?.message || data?.error || `HTTP error! Status: ${response.status}`;
+    let errorMsg = data?.message || data?.error || `HTTP error! Status: ${response.status}`;
+    if (data?.validationErrors && typeof data.validationErrors === 'object') {
+      const errList = Object.entries(data.validationErrors).map(([field, msg]) => `${field}: ${msg}`);
+      if (errList.length > 0) {
+        errorMsg = errList.join(', ');
+      }
+    }
     throw new Error(errorMsg);
   }
   return data;

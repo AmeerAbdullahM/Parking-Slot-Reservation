@@ -79,14 +79,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
+        StringBuilder summary = new StringBuilder();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            if (summary.length() > 0) summary.append(", ");
+            summary.append(fieldError.getField()).append(": ").append(fieldError.getDefaultMessage());
         }
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation Failed",
-                "Input validation errors occurred",
+                summary.length() > 0 ? summary.toString() : "Input validation errors occurred",
                 request.getRequestURI(),
                 errors
         );

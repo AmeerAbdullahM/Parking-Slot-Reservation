@@ -32,7 +32,7 @@ INSERT IGNORE INTO parking_lot_amenities (lot_id, amenity_id) VALUES
 
 -- 5. Insert Parking Slots for Lot 1 (Floor 1: B1, Floor 2: Ground, Floor 3: L1)
 -- Floor 1 (Basement 1) - Regular, EV, and Handicapped
-INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, row_number, col_number, slot_type, base_hourly_rate, status, lot_id) VALUES
+INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, grid_row, grid_col, slot_type, base_hourly_rate, status, lot_id) VALUES
 (1, 'B1-01', 1, 1, 1, 'EV_CHARGING', 6.00, 'AVAILABLE', 1),
 (2, 'B1-02', 1, 1, 2, 'EV_CHARGING', 6.00, 'AVAILABLE', 1),
 (3, 'B1-03', 1, 1, 3, 'HANDICAPPED', 4.00, 'AVAILABLE', 1),
@@ -47,7 +47,7 @@ INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, row_number, col
 (12, 'B1-12', 1, 2, 6, 'REGULAR', 4.00, 'AVAILABLE', 1);
 
 -- Floor 2 (Ground Floor)
-INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, row_number, col_number, slot_type, base_hourly_rate, status, lot_id) VALUES
+INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, grid_row, grid_col, slot_type, base_hourly_rate, status, lot_id) VALUES
 (13, 'G-01', 2, 1, 1, 'EV_CHARGING', 6.00, 'AVAILABLE', 1),
 (14, 'G-02', 2, 1, 2, 'REGULAR', 4.00, 'AVAILABLE', 1),
 (15, 'G-03', 2, 1, 3, 'HANDICAPPED', 4.00, 'AVAILABLE', 1),
@@ -62,7 +62,7 @@ INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, row_number, col
 (24, 'G-12', 2, 2, 6, 'REGULAR', 4.00, 'AVAILABLE', 1);
 
 -- Floor 3 (Level 1)
-INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, row_number, col_number, slot_type, base_hourly_rate, status, lot_id) VALUES
+INSERT IGNORE INTO parking_slots (id, slot_number, floor_number, grid_row, grid_col, slot_type, base_hourly_rate, status, lot_id) VALUES
 (25, 'L1-01', 3, 1, 1, 'REGULAR', 3.50, 'AVAILABLE', 1),
 (26, 'L1-02', 3, 1, 2, 'REGULAR', 3.50, 'AVAILABLE', 1),
 (27, 'L1-03', 3, 1, 3, 'REGULAR', 3.50, 'AVAILABLE', 1),

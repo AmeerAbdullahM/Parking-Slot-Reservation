@@ -60,6 +60,11 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        if (request.getStartTime().isBefore(now.minusMinutes(15))) {
+            throw new BadRequestException("Reservation start time cannot be in the past (more than 15 minutes ago)");
+        }
+
         if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().isEqual(request.getEndTime())) {
             throw new BadRequestException("End time must be strictly after start time");
         }
@@ -79,11 +84,42 @@ public class ReservationServiceImpl implements ReservationService {
             throw new BadRequestException("Selected slot is currently undergoing maintenance and cannot be reserved");
         }
 
-        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + request.getVehicleId()));
+        Vehicle vehicle;
+        if (request.getVehicleId() != null) {
+            vehicle = vehicleRepository.findById(request.getVehicleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + request.getVehicleId()));
 
-        if (!vehicle.getUser().getId().equals(userId) && user.getRole() == Role.ROLE_CUSTOMER) {
-            throw new UnauthorizedException("You can only reserve with a vehicle registered under your account");
+            if (!vehicle.getUser().getId().equals(userId) && user.getRole() == Role.ROLE_CUSTOMER) {
+                throw new UnauthorizedException("You can only reserve with a vehicle registered under your account");
+            }
+        } else if (request.getLicensePlate() != null && !request.getLicensePlate().trim().isEmpty()) {
+            String cleanPlate = request.getLicensePlate().trim().toUpperCase();
+            if (!cleanPlate.matches("^[A-Z0-9- ]{3,20}$")) {
+                throw new BadRequestException("Invalid vehicle license plate format. Expected 3-20 characters (e.g. ABC-1234, NY-9999, KA-01-AB-1234)");
+            }
+
+            vehicle = vehicleRepository.findByLicensePlate(cleanPlate).orElse(null);
+            if (vehicle != null) {
+                if (!vehicle.getUser().getId().equals(userId)) {
+                    vehicle.setUser(user);
+                    if (request.getVehicleModel() != null && !request.getVehicleModel().trim().isEmpty()) {
+                        vehicle.setModel(request.getVehicleModel().trim());
+                    }
+                    if (request.getVehicleType() != null) {
+                        vehicle.setVehicleType(request.getVehicleType());
+                    }
+                    vehicle = vehicleRepository.save(vehicle);
+                }
+            } else {
+                VehicleType type = request.getVehicleType() != null ? request.getVehicleType() : VehicleType.SEDAN;
+                String model = request.getVehicleModel() != null && !request.getVehicleModel().trim().isEmpty()
+                        ? request.getVehicleModel().trim()
+                        : "Standard";
+                Vehicle newVehicle = new Vehicle(cleanPlate, type, model, user);
+                vehicle = vehicleRepository.save(newVehicle);
+            }
+        } else {
+            throw new BadRequestException("Please enter a vehicle license plate number or select a vehicle");
         }
 
         // Overlap Collision Detection Query

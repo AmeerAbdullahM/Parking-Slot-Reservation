@@ -1,7 +1,7 @@
 package com.parkpulse.parkingreservation.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.FutureOrPresent;
+import com.parkpulse.parkingreservation.model.VehicleType;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
@@ -10,11 +10,17 @@ public class ReservationRequest {
     @NotNull(message = "Slot ID is required")
     private Long slotId;
 
-    @NotNull(message = "Vehicle ID is required")
+    // Optional if licensePlate is provided directly
     private Long vehicleId;
 
+    // Direct vehicle input fields
+    private String licensePlate;
+
+    private String vehicleModel;
+
+    private VehicleType vehicleType = VehicleType.SEDAN;
+
     @NotNull(message = "Start time is required")
-    @FutureOrPresent(message = "Start time must be in the present or future")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime startTime;
 
@@ -28,6 +34,15 @@ public class ReservationRequest {
     public ReservationRequest(Long slotId, Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
         this.slotId = slotId;
         this.vehicleId = vehicleId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public ReservationRequest(Long slotId, String licensePlate, String vehicleModel, VehicleType vehicleType, LocalDateTime startTime, LocalDateTime endTime) {
+        this.slotId = slotId;
+        this.licensePlate = licensePlate;
+        this.vehicleModel = vehicleModel;
+        this.vehicleType = vehicleType;
         this.startTime = startTime;
         this.endTime = endTime;
     }
@@ -48,6 +63,30 @@ public class ReservationRequest {
         this.vehicleId = vehicleId;
     }
 
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
+    public void setLicensePlate(String licensePlate) {
+        this.licensePlate = licensePlate;
+    }
+
+    public String getVehicleModel() {
+        return vehicleModel;
+    }
+
+    public void setVehicleModel(String vehicleModel) {
+        this.vehicleModel = vehicleModel;
+    }
+
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -64,3 +103,4 @@ public class ReservationRequest {
         this.endTime = endTime;
     }
 }
+

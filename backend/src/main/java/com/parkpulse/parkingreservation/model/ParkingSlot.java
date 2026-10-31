@@ -22,10 +22,10 @@ public class ParkingSlot {
     @Column(name = "floor_number", nullable = false)
     private Integer floorNumber = 1;
 
-    @Column(name = "row_number")
+    @Column(name = "grid_row")
     private Integer rowNumber = 1;
 
-    @Column(name = "col_number")
+    @Column(name = "grid_col")
     private Integer colNumber = 1;
 
     @Enumerated(EnumType.STRING)
