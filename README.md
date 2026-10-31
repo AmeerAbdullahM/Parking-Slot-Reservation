@@ -12,7 +12,7 @@
 
 ---
 
-## 📌 1. Project Overview & Domain
+##  1. Project Overview & Domain
 
 * **Project Title:** **ParkPulse** *(Smart Parking Slot Reservation System)*
 * **Domain:** Travel & Transport / Smart City Infrastructure
@@ -26,7 +26,7 @@
 
 ---
 
-## 🏛️ 2. System Architecture
+##  2. System Architecture
 
 ParkPulse follows a strict **Layered Enterprise Architecture** with decoupled contracts:
 
@@ -94,7 +94,7 @@ flowchart TD
 
 ---
 
-## 🗄️ 3. Database Schema & Entity-Relationship (ER) Diagram
+##  3. Database Schema & Entity-Relationship (ER) Diagram
 
 The database structure satisfies and exceeds all evaluation requirements with **at least 3–4 related tables featuring both 1:N and N:M relationships**:
 
@@ -192,7 +192,7 @@ erDiagram
 
 ---
 
-## 🌟 4. Signature Bonus Feature: Automated Overstay Penalty Engine
+##  4. Signature Bonus Feature: Automated Overstay Penalty Engine
 
 ### The Problem
 In campus and mall parking decks, drivers frequently overstay their booked window (e.g., booking 2 hours but departing after 3.5 hours), preventing scheduled reservations from parking and causing congestion.
@@ -215,7 +215,7 @@ ParkPulse features an **Automated Overstay Penalty Engine** executed in `Oversta
 
 ---
 
-## 🎯 5. Core Features Breakdown
+##  5. Core Features Breakdown
 
 * **Interactive 2D Bus-Style Parking Bay Selector:**
   * Displays an aerial parking stall grid per floor (B1, Ground, Level 1...).
@@ -234,7 +234,7 @@ ParkPulse features an **Automated Overstay Penalty Engine** executed in `Oversta
 
 ---
 
-## 🚀 6. Step-by-Step Setup & Execution
+##  6. Step-by-Step Setup & Execution
 
 ### Prerequisites
 * **Java 17 or higher** (Tested with Java 25 LTS)
@@ -282,7 +282,7 @@ ParkPulse features an **Automated Overstay Penalty Engine** executed in `Oversta
 
 ---
 
-## 🔑 7. Pre-Configured Test Accounts
+##  7. Pre-Configured Test Accounts
 
 | Role | Email Address | Password | Permissions & Dashboard |
 | :--- | :--- | :--- | :--- |
@@ -292,7 +292,7 @@ ParkPulse features an **Automated Overstay Penalty Engine** executed in `Oversta
 
 ---
 
-## 🧪 8. Unit Testing & Quality Assurance
+##  8. Unit Testing & Quality Assurance
 
 * Minimum requirement: 5 JUnit tests for service layer.
 * **ParkPulse includes 12 comprehensive JUnit 5 + Mockito unit tests** covering:
@@ -310,7 +310,7 @@ cd backend
 
 ---
 
-## 📬 9. Postman Collection Testing
+##  9. Postman Collection Testing
 
 A complete Postman collection is exported in the root directory:
 📂 `parking_slot_reservation_postman_collection.json`
@@ -339,7 +339,7 @@ A complete Postman collection is exported in the root directory:
 
 ---
 
-## 🎓 10. Viva Voce Defense & Knowledge Guide
+##  10. Viva Voce Defense & Knowledge Guide
 
 Prepare for your viva examination with these module-by-module explanations:
 
